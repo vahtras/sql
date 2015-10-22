@@ -137,29 +137,407 @@ class: center, middle, inverse
 
 ---
 
-&lt;script type=&#34;text/javascript&#34;
-  src=&#34;https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML&#34;&gt;
-&lt;/script&gt;
-# Introduction to sql
+# Introduction to databases
 
 ## Olav Vahtras
 
-KTH
+### Computational Python
 
 ---
 
 layout: false
 
-## Slide
+## Data Storage Solutions
 
-- Hi
-- Ho
+
+### Text files
+
+*  Simple
+*  Work well with version control
+*  Need to write own tools for analysis
+
+### Spread sheets
+
+* Good for simple analysis
+* Not so for large complex data sets
+
+### Databases
+
+* Powerful tools for search and analysis
+* Another language to learn
+* Different database engines (Oracle, Microsoft, Mysql...) with incompatible commands
+* We use SQLite http://www.sqlite.org
 
 ---
 
-## Slide
+## Setup for exercise
 
-- Write me
+* Install `sqlite3` (Ubuntu/Debian)
+```bash
+$ sudo apt-get install sqlite3
+```
+
+* Get database
+```bash
+$ wget http://files.software-carpentry.org/survey.db
+```
+
+* Test setup
+```bash
+$ sqlite3 survey.db
+SQLite version 3.8.7.4 2014-12-09 01:34:36
+Enter &#34;.help&#34; for usage hints.
+sqlite&gt; 
+```
+
+
+---
+
+## sqlite and SQL
+
+Two sets of commands:
+
+### sqlite
+
+Commands beginning with a dot are for this database implementation
+
+* Get help
+```bash
+sqlite&gt; .help
+.backup ?DB? FILE      Backup DB (default &#34;main&#34;) to FILE
+.bail on|off           Stop after hitting an error.  Default OFF
+.clone NEWDB           Clone data into NEWDB from the existing database
+...
+```
+* Initial configuration
+```bash
+sqlite&gt; .header on
+sqlite&gt; .mode columns
+```
+---
+* Quit, back to shell
+```bash
+sqlite&gt; .quit
+$
+```
+
+---
+
+* What tables are defined?
+```bash
+sqlite&gt; .tables
+Person   Site     Survey   Visited
+```
+
+* How are the tables defined?
+```sql
+sqlite&gt; .schema
+CREATE TABLE Person(
+	ident    text,
+	personal text,
+	family	 text
+);
+CREATE TABLE Site(
+	name text,
+	lat  real,
+	long real
+);
+CREATE TABLE Visited(
+	ident integer,
+	site  text,
+	dated text
+);
+CREATE TABLE Survey(
+	taken   integer,
+	person  text,
+	quant   text,
+	reading real
+);
+```
+*Example of SQL commands: Sequential Query Language*
+
+---
+
+## This example
+
+* *Person*: who took readings
+* *Site*: locations readings where taken
+* *Survey*: actual readings
+* *Visited*: when readings where taken
+---
+
+### Databases
+
+* Arranged as tables
+* Table columns = fields
+* Rows = records of data
+* Created and manipulated with SQL commands
+
+#### Examples
+
+* Select everything from a table
+
+```sql
+sqlite&gt; SELECT * FROM Person;
+ident       personal    family    
+----------  ----------  ----------
+dyer        William     Dyer      
+pb          Frank       Pabodie   
+lake        Anderson    Lake      
+roe         Valentina   Roerich   
+danforth    Frank       Danforth  
+```
+---
+* Select a few columns
+
+```sql
+sqlite&gt; SELECT personal, family  FROM Person;
+personal    family    
+----------  ----------
+William     Dyer      
+Frank       Pabodie   
+Anderson    Lake      
+Valentina   Roerich   
+Frank       Danforth  
+```
+```sql
+sqlite&gt; SELECT personal FROM Person;
+personal    family    
+----------  ----------
+William     Dyer      
+Frank       Pabodie   
+Anderson    Lake      
+Valentina   Roerich   
+Frank       Danforth  
+```
+
+---
+
+## Removing duplicates
+
+* What quantities where measured?
+* Use `DISTINCT` to remove duplicates
+
+```sql
+sqlite&gt; SELECT DISTINCT quant FROM Survey;
+quant     
+----------
+rad       
+sal       
+temp      
+```
+
+---
+
+## Sorting by a certain field
+
+* List persons sorted by last name
+* Use `ORDER BY`
+
+```sql
+sqlite&gt; SELECT * from Person ORDER BY family;
+ident       personal    family    
+----------  ----------  ----------
+danforth    Frank       Danforth  
+dyer        William     Dyer      
+lake        Anderson    Lake      
+pb          Frank       Pabodie   
+roe         Valentina   Roerich   
+```
+
+--
+
+
+---
+
+## Filtering
+
+Example: which measuremts (ident) where made at a certain cite (DR-1)
+
+* Use `WHERE` to fileter
+
+```sql
+sqlite&gt; SELECT ident FROM Visited WHERE site=&#39;DR-1&#39;;
+ident     
+----------
+619       
+622       
+844       
+```
+* Selections are made on another field than displayed
+
+&lt;center&gt;
+&lt;img src=&#34;fig/sql-filter.svg&#34; alt=&#34;SQL Filtering in Action&#34; width=&#34;400&#34;/&gt;
+&lt;/center&gt;
+
+---
+
+* Combine several filters with logic: `OR`, `AND`
+
+```sql
+sqlite&gt; SELECT * FROM Visited WHERE (site=&#39;DR-1&#39; OR site=&#39;DR-3&#39;);
+ident       site        dated     
+----------  ----------  ----------
+619         DR-1        1927-02-08
+622         DR-1        1927-02-10
+734         DR-3        1939-01-07
+735         DR-3        1930-01-12
+751         DR-3        1930-02-26
+752         DR-3                  
+844         DR-1        1932-03-22
+```
+
+* Using wildcards: `LIKE`
+
+```sql
+sqlite&gt; SELECT * FROM Visited WHERE site LIKE &#39;DR-%&#39;;
+ident       site        dated     
+----------  ----------  ----------
+619         DR-1        1927-02-08
+622         DR-1        1927-02-10
+734         DR-3        1939-01-07
+735         DR-3        1930-01-12
+751         DR-3        1930-02-26
+752         DR-3                  
+844         DR-1        1932-03-22
+```
+---
+
+#### Exercise
+Write a query that selects all records from Survey with salinity values outside the range [0, 1].
+
+--
+
+#### Solution
+
+```sql
+sqlite&gt; SELECT * FROM Survey WHERE (quant=&#39;sal&#39; AND (reading&lt;0 OR reading&gt;1));
+taken       person      quant       reading   
+----------  ----------  ----------  ----------
+752         roe         sal         41.6      
+837         roe         sal         22.5      
+```
+
+---
+
+## Calculating new values
+
+Consider calculating a new value from the data
+
+* Example: add a column with temperature readings in Fahrenheit
+
+--
+
+```sql
+sqlite&gt; SELECT *, 32+1.8*reading &#39;reading(F)&#39; FROM Survey WHERE quant=&#39;temp&#39;;
+taken       person      quant       reading     reading(F)
+----------  ----------  ----------  ----------  ----------
+734         pb          temp        -21.5       -6.7      
+735                     temp        -26.0       -14.8     
+751         pb          temp        -18.5       -1.3      
+752         lake        temp        -16.0       3.2       
+```
+
+---
+
+## Missing data
+
+Consider the Visted table
+```sql
+sqlite&gt; SELECT * FROM Visited;
+ident       site        dated     
+----------  ----------  ----------
+619         DR-1        1927-02-08
+622         DR-1        1927-02-10
+734         DR-3        1939-01-07
+735         DR-3        1930-01-12
+751         DR-3        1930-02-26
+752         DR-3                  
+837         MSK-4       1932-01-14
+844         DR-1        1932-03-22
+```
+
+* The date is missing by one of its entriese
+* A missing entry is referenced with the special variable  `NULL`
+
+```
+sqlite&gt; SELECT * FROM Visited WHERE dated IS NULL;
+ident       site        dated     
+----------  ----------  ----------
+752         DR-3                  
+```
+
+---
+
+### Aggregation of data
+
+* Combines several values of one type into one
+* `MIN`, `MAX`, `AVG`, `COUNT`, `SUM`
+
+#### Examples
+
+* Latest reading
+
+```sql
+sqlite&gt; SELECT *, MAX(dated) FROM Visited;
+ident       site        dated       MAX(dated)
+----------  ----------  ----------  ----------
+734         DR-3        1939-01-07  1939-01-07
+```
+
+* Number of readings
+
+```
+sqlite&gt; SELECT COUNT(*) FROM Survey;
+COUNT(*)  
+----------
+21        
+```
+
+---
+
+* Averages can be done on subsets with `GROUP BY`: e.g. average reading
+per person for each quantity
+
+```sql
+sqlite&gt; SELECT taken, person, quant, AVG(reading) 
+   ...&gt; FROM Survey 
+   ...&gt; GROUP BY person, quant;
+
+person      quant       AVG(reading)
+----------  ----------  ------------
+            sal         0.06        
+            temp        -26.0       
+dyer        rad         8.81        
+dyer        sal         0.11        
+lake        rad         1.825       
+lake        sal         0.1125      
+lake        temp        -16.0       
+pb          rad         6.66        
+pb          temp        -20.0       
+roe         rad         11.25       
+roe         sal         32.05       
+
+---
+```
+
+---
+
+
+### Summary
+
+* SQL allows you to manipulate datasets at a level not possible with spreadsheets.
+* SQL is a large programming language, a few selected commands gets you far.
+`SELECT`, `WHERE`, `ORDER BY`, `GROUP BY`
+* sqlite is one of several database enginges (Microsoft, Oracle, Mysql...)
+and interacts with a file rather than a server.
+
+---
+
+### Python and SQL
+
+* Convenient to let Python generate SQL commands
+* SQL data can be read into Python data structures
     </textarea>
 
     <script src="/sql/refreeze/js/remark-latest.min.js" type="text/javascript"></script>
