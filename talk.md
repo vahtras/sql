@@ -2,7 +2,7 @@
 
 ## Olav Vahtras
 
-### Software Carpentry Workshop Potsdam 2015-09-25
+### Computational Python
 
 ---
 
@@ -33,9 +33,9 @@ layout: false
 
 ## Setup for exercise
 
-* Install `sqlite3`
+* Install `sqlite3` (Ubuntu/Debian)
 ```bash
-$ apt-get install sqlite3
+$ sudo apt-get install sqlite3
 ```
 
 * Get database
@@ -75,6 +75,7 @@ sqlite> .help
 sqlite> .header on
 sqlite> .mode columns
 ```
+---
 * Quit, back to shell
 ```bash
 sqlite> .quit
@@ -207,9 +208,6 @@ roe         Valentina   Roerich
 
 --
 
-### Exercise
-
-1. Write a query that selects distinct dates from the Visited table.
 
 ---
 
@@ -346,9 +344,12 @@ sqlite> SELECT *, MAX(dated) FROM Visited;
 ident       site        dated       MAX(dated)
 ----------  ----------  ----------  ----------
 734         DR-3        1939-01-07  1939-01-07
+```
 
 * Number of readings
-qlite> SELECT COUNT(*) FROM Survey;
+
+```
+sqlite> SELECT COUNT(*) FROM Survey;
 COUNT(*)  
 ----------
 21        
@@ -377,6 +378,8 @@ pb          rad         6.66
 pb          temp        -20.0       
 roe         rad         11.25       
 roe         sal         32.05       
+
+---
 ```
 
 ---
@@ -389,3 +392,10 @@ roe         sal         32.05
 `SELECT`, `WHERE`, `ORDER BY`, `GROUP BY`
 * sqlite is one of several database enginges (Microsoft, Oracle, Mysql...)
 and interacts with a file rather than a server.
+
+---
+
+### Python and SQL
+
+* Convenient to let Python generate SQL commands
+* SQL data can be read into Python data structures
