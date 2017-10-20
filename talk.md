@@ -2,6 +2,7 @@
 >>> import sqlite3
 
 -->
+
 # Introduction to databases
 
 ## Olav Vahtras
